@@ -3,15 +3,37 @@ using System.Linq;
 using System.Reflection;
 using Harmony;
 using UnityModManagerNet;
+using UnityEngine;
+using UnityEngine.UI;
 using TH20;
 
 namespace InitalQualifications
 {
     public class Settings : UnityModManager.ModSettings
     {
+        public int RespecInitialPool = 2;
+        public int RespecFutureApplicants = 2;
+
         public override void Save(UnityModManager.ModEntry modEntry)
         {
             Save(this, modEntry);
+        }
+    }
+
+    public class Qualifications
+    {
+        public Dictionary<string, QualificationDefinition> Definitions; // = new Dictionary<string, QualificationDefinition>();
+
+        public void Process(WeightedList<QualificationDefinition> input)
+        {
+            if (Definitions == null)
+            {
+                Definitions = new Dictionary<string, QualificationDefinition>();
+                foreach (KeyValuePair<QualificationDefinition, int> item in input.List)
+                {
+                    Definitions.Add(item.Key.ToString(), item.Key);
+                }
+            }
         }
     }
 
@@ -19,116 +41,10 @@ namespace InitalQualifications
     {
         public static bool enabled;
         public static Settings settings;
+        public static Qualifications qualifications = new Qualifications();
         public static UnityModManager.ModEntry.ModLogger Logger;
 
-        static bool Load(UnityModManager.ModEntry modEntry)
-        {
-            var harmony = HarmonyInstance.Create(modEntry.Info.Id);
-            harmony.PatchAll(Assembly.GetExecutingAssembly());
-
-            settings = Settings.Load<Settings>(modEntry);
-
-            Logger = modEntry.Logger;
-
-            modEntry.OnToggle = OnToggle;
-            modEntry.OnGUI = OnGUI;
-            modEntry.OnSaveGUI = OnSaveGUI;
-
-            return true;
-        }
-
-        static bool OnToggle(UnityModManager.ModEntry modEntry, bool value)
-        {
-            enabled = value;
-
-            return true;
-        }
-
-        static void OnGUI(UnityModManager.ModEntry modEntry)
-        {
-        }
-
-        static void OnSaveGUI(UnityModManager.ModEntry modEntry)
-        {
-            settings.Save(modEntry);
-        }
-    }
-
-    [HarmonyPatch(typeof(JobApplicantManager), "InitialisePools")]
-    static class JobApplicantManager_InitialisePools_Patch
-    {
-        private static readonly Dictionary<StaffDefinition.Type, List<List<string>>> pools = new Dictionary<StaffDefinition.Type, List<List<string>>>() {
-            {
-                StaffDefinition.Type.Doctor, new List<List<string>>{
-                new List<string> { "General Practice", "General Practice II", "General Practice III", "General Practice IV", "General Practice V" },
-                new List<string> { "Radiology", "Diagnostics", "Diagnostics II", "Diagnostics III", "Bedside Manner" },
-                new List<string> { "Treatment", "Treatment II", "Treatment III", "Treatment IV", "Treatment V" }
-                }
-            },
-            {
-                StaffDefinition.Type.Nurse, new List<List<string>>{
-                new List<string> { "Diagnostics", "Diagnostics II", "Diagnostics III", "Diagnostics IV", "Diagnostics V" },
-                new List<string> { "Treatment", "Treatment II", "Treatment III", "Treatment IV", "Treatment V" },
-                new List<string> { "Ward Management", "Ward Management II", "Ward Management III", "Ward Management IV", "Ward Management V" }
-                }
-            },
-            {
-                StaffDefinition.Type.Assistant, new List<List<string>>{
-                new List<string> { "Customer Service", "Customer Service II", "Customer Service III", "Customer Service IV", "Customer Service V" },
-                new List<string> { "Customer Service", "Customer Service II", "Customer Service III", "Customer Service IV", "Customer Service V" },
-                new List<string> { "Marketing", "Marketing II", "Marketing III", "Marketing IV", "Marketing V" }
-                }
-            },
-            {
-                StaffDefinition.Type.Janitor, new List<List<string>>{
-                new List<string> { "Motivation", "Ghost Capture", "Maintenance", "Maintenance II", "Maintenance III" },
-                new List<string> { "Motivation", "Mechanics", "Mechanics II", "Mechanics III", "Mechanics IV" },
-                new List<string> { "Motivation", "Maintenance", "Maintenance II", "Maintenance III", "Maintenance IV" }
-                }
-            }
-        };
-
-
-        static void Postfix(JobApplicantManager __instance)
-        {
-            Dictionary<string, QualificationDefinition> defs = new Dictionary<string, QualificationDefinition>();
-            foreach (KeyValuePair<QualificationDefinition, int> item in __instance.Qualifications.List)
-            {
-                defs.Add(item.Key.ToString(), item.Key);
-            }
-            foreach (KeyValuePair<StaffDefinition.Type, List<List<string>>> item in pools)
-            {
-                JobApplicantPool pool = __instance.GetJobApplicantPool(item.Key);
-                int i = 0;
-                foreach (JobApplicant applicant in pool.Applicants.OrderByDescending(d => d.Rank))
-                {
-                    bool fail = false;
-                    var q = Traverse.Create(applicant).Property("Qualifications");
-                    var target = q.GetValue<List<QualificationSlot>>();
-                    target.Clear();
-                    foreach (string job in item.Value[i])
-                    {
-                        if (!defs.ContainsKey(job))
-                        {
-                            Main.Logger.Error($"Unable to locate qualification {job} in current level");
-                            fail = true;
-                            break;
-                        }
-                        target.Add(new QualificationSlot(defs[job], true));
-                    }
-                    if (!fail) q.SetValue(target);
-                    i++;
-                }
-            }
-
-            return;
-        }
-    }
-
-    [HarmonyPatch(typeof(JobApplicant), "AssignRandomQualifications")]
-    class JobApplicant_AssignRandomQualifications_Patch
-    {
-        private static readonly Dictionary<string, List<string>> builds = new Dictionary<string, List<string>>()
+        public static readonly Dictionary<string, List<string>> Builds = new Dictionary<string, List<string>>()
         {
             // Shared
             { "Treatment", new List<string> { "Treatment", "Treatment II", "Treatment III", "Treatment IV", "Treatment V" } },
@@ -161,6 +77,107 @@ namespace InitalQualifications
             { "", new List<string> { } }
         };
 
+        static bool Load(UnityModManager.ModEntry modEntry)
+        {
+            var harmony = HarmonyInstance.Create(modEntry.Info.Id);
+            harmony.PatchAll(Assembly.GetExecutingAssembly());
+
+            settings = Settings.Load<Settings>(modEntry);
+
+            Logger = modEntry.Logger;
+
+            modEntry.OnToggle = OnToggle;
+            modEntry.OnGUI = OnGUI;
+            modEntry.OnSaveGUI = OnSaveGUI;
+
+            return true;
+        }
+
+        static bool OnToggle(UnityModManager.ModEntry modEntry, bool value)
+        {
+            enabled = value;
+
+            return true;
+        }
+
+        static void OnGUI(UnityModManager.ModEntry modEntry)
+        {
+            string[] selStrings = new string[] { "off", "student", "random", "max" };
+            GUILayout.BeginHorizontal("box");
+            GUILayout.Label(" Respec initial applicant qualifications.");
+            settings.RespecInitialPool = GUILayout.SelectionGrid(settings.RespecInitialPool, selStrings, 4);
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal("box");
+            GUILayout.Label(" Respec future applicant qualifications.");
+            settings.RespecFutureApplicants = GUILayout.SelectionGrid(settings.RespecFutureApplicants, selStrings, 4);
+            GUILayout.EndHorizontal();
+        }
+
+        static void OnSaveGUI(UnityModManager.ModEntry modEntry)
+        {
+            settings.Save(modEntry);
+        }
+
+        public static bool ProcessJobApplicant(ref JobApplicant jobApplicant, string build, bool initial = false)
+        {
+            if (!Builds.ContainsKey(build))
+                return false;
+
+            var q = Traverse.Create(jobApplicant).Property("Qualifications");
+            var target = q.GetValue<List<QualificationSlot>>();
+            target.Clear();
+            int i = 0;
+            foreach (string job in Builds[build])
+            {
+                if (i++ > jobApplicant.MaxQualifications) break;
+                if (qualifications.Definitions.ContainsKey(job))
+                {
+                    Logger.Error($"Unable to locate qualification {job} in current level.");
+                    return false;
+                }
+                target.Add(new QualificationSlot(qualifications.Definitions[job], true));
+            }
+            q.SetValue(target);
+
+            return true;
+        }
+    }
+
+    [HarmonyPatch(typeof(JobApplicantManager), "InitialisePools")]
+    static class JobApplicantManager_InitialisePools_Patch
+    {
+        private static readonly Dictionary<StaffDefinition.Type, List<string>> pools = new Dictionary<StaffDefinition.Type, List<string>>() {
+            { StaffDefinition.Type.Doctor,    new List<string>{ "General Practioner", "Radiologist", "Treatment" } },
+            { StaffDefinition.Type.Nurse,     new List<string>{ "Diagnostics",        "Treatment",   "Ward Nurse" } },
+            { StaffDefinition.Type.Assistant, new List<string>{ "Customer Service",   "Marketer",    "Customer Service" } },
+            { StaffDefinition.Type.Janitor,   new List<string>{ "Ghost Repair",       "Mechanic",    "Repair" } }
+        };
+
+        static void Postfix(JobApplicantManager __instance)
+        {
+            if (!Main.enabled || Main.settings.RespecInitialPool == 0)
+                return;
+
+            Main.qualifications.Process(__instance.Qualifications);
+            foreach (KeyValuePair<StaffDefinition.Type, List<string>> item in pools)
+            {
+                JobApplicantPool pool = __instance.GetJobApplicantPool(item.Key);
+                pool.Applicants.Sort((a, b) => b.Rank - a.Rank);
+                for (int i = 0; i < pool.Applicants.Count; i++)
+                {
+                    JobApplicant temp = pool.Applicants[i];
+                    Main.ProcessJobApplicant(ref temp, pools[item.Key][i], true);
+                    pool.Applicants[i] = temp;
+                }
+            }
+
+            return;
+        }
+    }
+
+    [HarmonyPatch(typeof(JobApplicant), "AssignRandomQualifications")]
+    class JobApplicant_AssignRandomQualifications_Patch
+    {
         private static readonly Dictionary<StaffDefinition.Type, Dictionary<string, int>> statistics = new Dictionary<StaffDefinition.Type, Dictionary<string, int>>()
         {
             {
@@ -205,31 +222,14 @@ namespace InitalQualifications
 
         static void Postfix(JobApplicant __instance, WeightedList<QualificationDefinition> qualifications)
         {
-            bool fail = false;
+            if (!Main.enabled || Main.settings.RespecFutureApplicants == 0)
+                return;
+            Main.qualifications.Process(qualifications);
+
             WeightedList<string> buildlist = new WeightedList<string>();
-            var q = Traverse.Create(__instance).Property("Qualifications");
-            List<QualificationSlot> target = q.GetValue<List<QualificationSlot>>();
-            target.Clear();
-
-            Dictionary<string, QualificationDefinition> defs = new Dictionary<string, QualificationDefinition>();
-            foreach (KeyValuePair<QualificationDefinition, int> item in qualifications.List)
-            {
-                defs.Add(item.Key.ToString(), item.Key);
-            }
-
             foreach (KeyValuePair<string, int> item in statistics[__instance.Definition._type]) buildlist.Add(item.Key, item.Value);
 
-            foreach (string job in builds[buildlist.Choose(null, RandomUtils.GlobalRandomInstance)])
-            {
-                if (!defs.ContainsKey(job))
-                {
-                    Main.Logger.Error($"Unable to locate qualification {job} in current level");
-                    fail = true;
-                    break;
-                }
-                target.Add(new QualificationSlot(defs[job], true));
-            }
-            if (!fail) q.SetValue(target);
+            Main.ProcessJobApplicant(ref __instance, buildlist.Choose(null, RandomUtils.GlobalRandomInstance), false);
         }
     }
 }
