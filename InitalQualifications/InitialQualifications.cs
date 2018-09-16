@@ -20,7 +20,7 @@ namespace InitalQualifications
 
     public class Qualifications
     {
-        public Dictionary<string, QualificationDefinition> Definitions; // = new Dictionary<string, QualificationDefinition>();
+        public Dictionary<string, QualificationDefinition> Definitions;
 
         public void Process(WeightedList<QualificationDefinition> input)
         {
@@ -28,9 +28,7 @@ namespace InitalQualifications
             {
                 Definitions = new Dictionary<string, QualificationDefinition>();
                 foreach (KeyValuePair<QualificationDefinition, int> item in input.List)
-                {
                     Definitions.Add(item.Key.ToString(), item.Key);
-                }
             }
         }
     }
@@ -41,6 +39,8 @@ namespace InitalQualifications
         public static Settings settings;
         public static Qualifications qualifications = new Qualifications();
         public static UnityModManager.ModEntry.ModLogger Logger;
+
+        public static bool InInitialisePools = false;
 
         public static readonly Dictionary<string, List<string>> Builds = new Dictionary<string, List<string>>()
         {
@@ -116,7 +116,7 @@ namespace InitalQualifications
             settings.Save(modEntry);
         }
 
-        public static bool ProcessJobApplicant(ref JobApplicant jobApplicant, string build, bool initial = false)
+        public static bool ProcessJobApplicant(ref JobApplicant jobApplicant, string build)
         {
             if (!Builds.ContainsKey(build))
                 return false;
@@ -125,10 +125,11 @@ namespace InitalQualifications
             var target = q.GetValue<List<QualificationSlot>>();
             target.Clear();
             int i = 0;
+
             foreach (string job in Builds[build])
             {
                 if (i++ > jobApplicant.MaxQualifications) break;
-                if (qualifications.Definitions.ContainsKey(job))
+                if (!qualifications.Definitions.ContainsKey(job))
                 {
                     Logger.Error($"Unable to locate qualification {job} in current level.");
                     return false;
@@ -151,12 +152,18 @@ namespace InitalQualifications
             { StaffDefinition.Type.Janitor,   new List<string>{ "Ghost Repair",       "Mechanic",    "Repair" } }
         };
 
+        static void Prefix(JobApplicantManager __instance)
+        {
+            if (!Main.enabled || Main.settings.RespecInitialPool == 0)
+                return;
+            Main.InInitialisePools = true;
+            Main.qualifications.Process(__instance.Qualifications);
+        }
+
         static void Postfix(JobApplicantManager __instance)
         {
             if (!Main.enabled || Main.settings.RespecInitialPool == 0)
                 return;
-
-            Main.qualifications.Process(__instance.Qualifications);
             foreach (KeyValuePair<StaffDefinition.Type, List<string>> item in pools)
             {
                 JobApplicantPool pool = __instance.GetJobApplicantPool(item.Key);
@@ -164,12 +171,11 @@ namespace InitalQualifications
                 for (int i = 0; i < pool.Applicants.Count; i++)
                 {
                     JobApplicant temp = pool.Applicants[i];
-                    Main.ProcessJobApplicant(ref temp, pools[item.Key][i], true);
+                    Main.ProcessJobApplicant(ref temp, pools[item.Key][i]);
                     pool.Applicants[i] = temp;
                 }
             }
-
-            return;
+            Main.InInitialisePools = false;
         }
     }
 
@@ -218,16 +224,16 @@ namespace InitalQualifications
             }
         };
 
-        static void Postfix(JobApplicant __instance, WeightedList<QualificationDefinition> qualifications)
+        static void Postfix(JobApplicant __instance, WeightedList<QualificationDefinition> qualifications, Metagame metagame, Level level, int chanceOfEmptyTrainingSlot)
         {
-            if (!Main.enabled || Main.settings.RespecFutureApplicants == 0)
+            if (!Main.enabled || Main.InInitialisePools || Main.settings.RespecFutureApplicants == 0)
                 return;
             Main.qualifications.Process(qualifications);
 
             WeightedList<string> buildlist = new WeightedList<string>();
             foreach (KeyValuePair<string, int> item in statistics[__instance.Definition._type]) buildlist.Add(item.Key, item.Value);
 
-            Main.ProcessJobApplicant(ref __instance, buildlist.Choose(null, RandomUtils.GlobalRandomInstance), false);
+            Main.ProcessJobApplicant(ref __instance, buildlist.Choose(null, RandomUtils.GlobalRandomInstance));
         }
     }
 }
