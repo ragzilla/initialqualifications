@@ -118,15 +118,17 @@ namespace InitalQualifications
 
         private static bool CheckMinAction(int i)
         {
+            Logger.Log($"CheckMinAction {InInitialisePools} {i} {settings.RespecInitialPool} {settings.RespecFutureApplicants}");
             // 0 = off, 1 = students, 2 = random, 3 = max
             // checks to see if we should perform an action at a given level for the current state
-            if (InInitialisePools  && i >= settings.RespecInitialPool) return true;
-            if (!InInitialisePools && i >= settings.RespecFutureApplicants) return true;
+            if (InInitialisePools  && i <= settings.RespecInitialPool) return true;
+            if (!InInitialisePools && i <= settings.RespecFutureApplicants) return true;
             return false;
         }
 
         private static bool CheckExactAction(int i)
         {
+            Logger.Log($"CheckExactAction {InInitialisePools} {i} {settings.RespecInitialPool} {settings.RespecFutureApplicants}");
             // 0 = off, 1 = students, 2 = random, 3 = max
             // checks to see if we should perform an action at a given level for the current state
             if (InInitialisePools && i == settings.RespecInitialPool) return true;
