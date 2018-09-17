@@ -174,7 +174,7 @@ namespace InitalQualifications
                 int i = 0;
                 foreach (string job in Builds[build])
                 {
-                    if (i++ > num) break;
+                    if (++i > num) break;
                     if (!qualifications.Definitions.ContainsKey(job))
                     {
                         Logger.Error($"Unable to locate qualification {job} in current level.");
