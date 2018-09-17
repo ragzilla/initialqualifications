@@ -118,7 +118,6 @@ namespace InitalQualifications
 
         private static bool CheckMinAction(int i)
         {
-            Logger.Log($"CheckMinAction {InInitialisePools} {i} {settings.RespecInitialPool} {settings.RespecFutureApplicants}");
             // 0 = off, 1 = students, 2 = random, 3 = max
             // checks to see if we should perform an action at a given level for the current state
             if (InInitialisePools  && i <= settings.RespecInitialPool) return true;
@@ -128,7 +127,6 @@ namespace InitalQualifications
 
         private static bool CheckExactAction(int i)
         {
-            Logger.Log($"CheckExactAction {InInitialisePools} {i} {settings.RespecInitialPool} {settings.RespecFutureApplicants}");
             // 0 = off, 1 = students, 2 = random, 3 = max
             // checks to see if we should perform an action at a given level for the current state
             if (InInitialisePools && i == settings.RespecInitialPool) return true;
@@ -152,7 +150,7 @@ namespace InitalQualifications
                 rank = 0;
                 r.SetValue(rank);
             }
-            else if (CheckMinAction(2)) // if we're set to random or above
+            else if (CheckMinAction(2)) // if we're set to random or max
             {
                 if (CheckExactAction(3))
                 {
@@ -196,6 +194,7 @@ namespace InitalQualifications
 
         static void Prefix(JobApplicantManager __instance)
         {
+            Main.InInitialisePools = true;
             if (!Main.enabled || Main.settings.RespecInitialPool == 0)
                 return;
             Main.InInitialisePools = true;
@@ -205,7 +204,10 @@ namespace InitalQualifications
         static void Postfix(JobApplicantManager __instance)
         {
             if (!Main.enabled || Main.settings.RespecInitialPool == 0)
+            {
+                Main.InInitialisePools = false;
                 return;
+            }
             foreach (KeyValuePair<StaffDefinition.Type, List<string>> item in pools)
             {
                 JobApplicantPool pool = __instance.GetJobApplicantPool(item.Key);
