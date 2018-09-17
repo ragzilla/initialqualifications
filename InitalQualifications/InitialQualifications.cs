@@ -77,7 +77,7 @@ namespace InitalQualifications
 
         static bool Load(UnityModManager.ModEntry modEntry)
         {
-            var harmony = HarmonyInstance.Create(modEntry.Info.Id);
+            HarmonyInstance harmony = HarmonyInstance.Create(modEntry.Info.Id);
             harmony.PatchAll(Assembly.GetExecutingAssembly());
 
             settings = Settings.Load<Settings>(modEntry);
@@ -116,28 +116,68 @@ namespace InitalQualifications
             settings.Save(modEntry);
         }
 
+        private static bool CheckMinAction(int i)
+        {
+            // 0 = off, 1 = students, 2 = random, 3 = max
+            // checks to see if we should perform an action at a given level for the current state
+            if (InInitialisePools  && i >= settings.RespecInitialPool) return true;
+            if (!InInitialisePools && i >= settings.RespecFutureApplicants) return true;
+            return false;
+        }
+
+        private static bool CheckExactAction(int i)
+        {
+            // 0 = off, 1 = students, 2 = random, 3 = max
+            // checks to see if we should perform an action at a given level for the current state
+            if (InInitialisePools && i == settings.RespecInitialPool) return true;
+            if (!InInitialisePools && i == settings.RespecFutureApplicants) return true;
+            return false;
+        }
+
         public static bool ProcessJobApplicant(ref JobApplicant jobApplicant, string build)
         {
             if (!Builds.ContainsKey(build))
                 return false;
 
-            var q = Traverse.Create(jobApplicant).Property("Qualifications");
-            var target = q.GetValue<List<QualificationSlot>>();
+            Traverse q = Traverse.Create(jobApplicant).Property("Qualifications");
+            List<QualificationSlot> target = q.GetValue<List<QualificationSlot>>();
             target.Clear();
-            int i = 0;
 
-            foreach (string job in Builds[build])
+            if (CheckExactAction(1)) // we're speccing trainees
             {
-                if (i++ > jobApplicant.MaxQualifications) break;
-                if (!qualifications.Definitions.ContainsKey(job))
-                {
-                    Logger.Error($"Unable to locate qualification {job} in current level.");
-                    return false;
-                }
-                target.Add(new QualificationSlot(qualifications.Definitions[job], true));
+                Traverse r = Traverse.Create(jobApplicant).Property("Rank");
+                int rank = r.GetValue<int>();
+                rank = 0;
+                r.SetValue(rank);
             }
-            q.SetValue(target);
+            else if (CheckMinAction(2)) // if we're set to random or above
+            {
+                if (CheckExactAction(3))
+                {
+                    Traverse r = Traverse.Create(jobApplicant).Property("Rank");
+                    int rank = r.GetValue<int>();
+                    rank = 4;
+                    r.SetValue(rank);
 
+                    Traverse x = Traverse.Create(jobApplicant).Property("Experience");
+                    float xp = x.GetValue<float>();
+                    xp = 0.0f;
+                    x.SetValue(xp);
+                }
+                int i = 0;
+                foreach (string job in Builds[build])
+                {
+                    if (i++ > jobApplicant.MaxQualifications) break;
+                    if (!qualifications.Definitions.ContainsKey(job))
+                    {
+                        Logger.Error($"Unable to locate qualification {job} in current level.");
+                        return false;
+                    }
+                    target.Add(new QualificationSlot(qualifications.Definitions[job], true));
+                }
+            }
+
+            q.SetValue(target);
             return true;
         }
     }
@@ -224,7 +264,7 @@ namespace InitalQualifications
             }
         };
 
-        static void Postfix(JobApplicant __instance, WeightedList<QualificationDefinition> qualifications, Metagame metagame, Level level, int chanceOfEmptyTrainingSlot)
+        static void Postfix(JobApplicant __instance, WeightedList<QualificationDefinition> qualifications)
         {
             if (!Main.enabled || Main.InInitialisePools || Main.settings.RespecFutureApplicants == 0)
                 return;
