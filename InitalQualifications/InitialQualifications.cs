@@ -152,6 +152,7 @@ namespace InitalQualifications
             }
             else if (CheckMinAction(2)) // if we're set to random or max
             {
+                int num = jobApplicant.MaxQualifications - 1;
                 if (CheckExactAction(3))
                 {
                     Traverse r = Traverse.Create(jobApplicant).Property("Rank");
@@ -163,11 +164,17 @@ namespace InitalQualifications
                     float xp = x.GetValue<float>();
                     xp = 0.0f;
                     x.SetValue(xp);
+
+                    num = jobApplicant.MaxQualifications;
+                }
+                else if (RandomUtils.GlobalRandomInstance.Next(0, 100) > 50)
+                {
+                    num++;
                 }
                 int i = 0;
                 foreach (string job in Builds[build])
                 {
-                    if (i++ > jobApplicant.MaxQualifications) break;
+                    if (i++ > num) break;
                     if (!qualifications.Definitions.ContainsKey(job))
                     {
                         Logger.Error($"Unable to locate qualification {job} in current level.");
