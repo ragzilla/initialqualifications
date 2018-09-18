@@ -28,7 +28,7 @@ namespace InitalQualifications
             {
                 Definitions = new Dictionary<string, QualificationDefinition>();
                 foreach (KeyValuePair<QualificationDefinition, int> item in input.List)
-                    Definitions.Add(item.Key.ToString(), item.Key);
+                    Definitions.Add(item.Key.NameLocalised.Term, item.Key);
             }
         }
     }
@@ -45,31 +45,31 @@ namespace InitalQualifications
         public static readonly Dictionary<string, List<string>> Builds = new Dictionary<string, List<string>>()
         {
             // Shared
-            { "Treatment", new List<string> { "Treatment", "Treatment II", "Treatment III", "Treatment IV", "Treatment V" } },
+            { "Treatment",          new List<string> { "Qualification/Doctor_Treatment_1_Name",       "Qualification/Doctor_Treatment_2_Name",       "Qualification/Doctor_Treatment_3_Name",       "Qualification/Doctor_Treatment_4_Name",       "Qualification/Doctor_Treatment_5_Name"         } },
 
             // Doctors
-            { "General Practioner", new List<string> { "General Practice", "General Practice II", "General Practice III", "General Practice IV", "General Practice V" } },
-            { "Radiologist",        new List<string> { "Radiology", "Diagnostics", "Diagnostics II", "Diagnostics III", "Bedside Manner" } },
-            { "Geneticist",         new List<string> { "Genetics", "Diagnostics", "Treatment", "Diagnostics II", "Treatment II" } },
-            { "Surgeon",            new List<string> { "Surgery", "Surgery II", "Surgery III", "Surgery IV", "Surgery V" } },
-            { "Researcher",         new List<string> { "Research", "Research II", "Research III", "Research IV", "Research V" } },
-            { "Psychiatrist",       new List<string> { "Psychiatry", "Psychiatry II", "Psychiatry III", "Psychiatry IV", "Psychiatry V" } },
+            { "General Practioner", new List<string> { "Qualification/Doctor_GeneralPractice_1_Name", "Qualification/Doctor_GeneralPractice_2_Name", "Qualification/Doctor_GeneralPractice_3_Name", "Qualification/Doctor_GeneralPractice_4_Name", "Qualification/Doctor_GeneralPractice_5_Name"   } },
+            { "Radiologist",        new List<string> { "Qualification/Doctor_Radiology_1_Name",       "Qualification/Doctor_Diagnosis_1_Name",       "Qualification/Doctor_Diagnosis_2_Name",       "Qualification/Doctor_Diagnosis_3_Name",       "Qualification/General_PatientHappiness_1_Name" } },
+            { "Geneticist",         new List<string> { "Qualification/Doctor_Genetics_1_Name",        "Qualification/Doctor_Diagnosis_1_Name",       "Qualification/Doctor_Treatment_1_Name",       "Qualification/Doctor_Diagnosis_2_Name",       "Qualification/Doctor_Treatment_2_Name"         } },
+            { "Surgeon",            new List<string> { "Qualification/Doctor_Surgery_1_Name",         "Qualification/Doctor_Surgery_2_Name",         "Qualification/Doctor_Surgery_3_Name",         "Qualification/Doctor_Surgery_4_Name",         "Qualification/Doctor_Surgery_5_Name"           } },
+            { "Researcher",         new List<string> { "Qualification/Doctor_Research_1_Name",        "Qualification/Doctor_Research_2_Name",        "Qualification/Doctor_Research_3_Name",        "Qualification/Doctor_Research_4_Name",        "Qualification/Doctor_Research_5_Name"          } },
+            { "Psychiatrist",       new List<string> { "Qualification/Doctor_Psychiatry_1_Name",      "Qualification/Doctor_Psychiatry_2_Name",      "Qualification/Doctor_Psychiatry_3_Name",      "Qualification/Doctor_Psychiatry_4_Name",      "Qualification/Doctor_Psychiatry_5_Name"        } },
 
             // Nurses
-            { "Diagnostics",        new List<string> { "Diagnostics", "Diagnostics II", "Diagnostics III", "Diagnostics IV", "Diagnostics V" } },
-            { "Ward Nurse",         new List<string> { "Ward Management", "Ward Management II", "Ward Management III", "Ward Management IV", "Ward Management V" } },
-            { "Pharmacist",         new List<string> { "Pharmacy Management", "Treatment", "Treatment II", "Treatment III", "Treatment IV" } },
-            { "Injection",          new List<string> { "Injection Administration", "Treatment", "Treatment II", "Treatment III", "Treatment IV" } },
-
-            // Assistants
-            { "Customer Service",   new List<string> { "Customer Service", "Customer Service II", "Customer Service III", "Customer Service IV", "Customer Service V" } },
-            { "Marketer",           new List<string> { "Marketing", "Marketing II", "Marketing III", "Marketing IV", "Marketing V" } },
-
-            // Janitors
-            { "Ghost Mechanic",     new List<string> { "Ghost Capture", "Motivation", "Mechanics", "Mechanics II", "Mechanics III" } },
-            { "Ghost Repair",       new List<string> { "Ghost Capture", "Motivation", "Maintenance", "Maintenance II", "Maintenance III" } },
-            { "Mechanic",           new List<string> { "Motivation", "Mechanics", "Mechanics II", "Mechanics III", "Mechanics IV" } },
-            { "Repair",             new List<string> { "Motivation", "Maintenance", "Maintenance II", "Maintenance III", "Maintenance IV" } },
+            { "Diagnostics",        new List<string> { "Qualification/Doctor_Diagnosis_1_Name",       "Qualification/Doctor_Diagnosis_2_Name",       "Qualification/Doctor_Diagnosis_3_Name",       "Qualification/Doctor_Diagnosis_4_Name",       "Qualification/Doctor_Diagnosis_5_Name"         } },
+            { "Ward Nurse",         new List<string> { "Qualification/Nurse_WardManagement_1_Name",   "Qualification/Nurse_WardManagement_2_Name",   "Qualification/Nurse_WardManagement_3_Name",   "Qualification/Nurse_WardManagement_4_Name",   "Qualification/Nurse_WardManagement_4_Name"     } },
+            { "Pharmacist",         new List<string> { "Qualification/Nurse_Pharmacy_1_Name",         "Qualification/Doctor_Treatment_1_Name",       "Qualification/Doctor_Treatment_2_Name",       "Qualification/Doctor_Treatment_3_Name",       "Qualification/Doctor_Treatment_4_Name"         } },
+            { "Injection",          new List<string> { "Qualification/Nurse_Injections_1_Name",       "Qualification/Doctor_Treatment_1_Name",       "Qualification/Doctor_Treatment_2_Name",       "Qualification/Doctor_Treatment_3_Name",       "Qualification/Doctor_Treatment_4_Name"         } },
+                                                                                                                                                                                                                                                   
+            // Assistants                                                                                                                                                                                                                          
+            { "Customer Service",   new List<string> { "Qualification/Assistant_Service_1_Name",      "Qualification/Assistant_Service_2_Name",      "Qualification/Assistant_Service_3_Name",      "Qualification/Assistant_Service_4_Name",      "Qualification/Assistant_Service_5_Name"        } },
+            { "Marketer",           new List<string> { "Qualification/Assistant_Marketing_1_Name",    "Qualification/Assistant_Marketing_2_Name",    "Qualification/Assistant_Marketing_3_Name",    "Qualification/Assistant_Marketing_4_Name",    "Qualification/Assistant_Marketing_5_Name"      } },
+                                                                                                                                                                                                                                                   
+            // Janitors                                                                                                                                                                                                                            
+            { "Ghost Mechanic",     new List<string> { "Qualification/Janitor_GhostCapture_1_Name",   "Qualification/General_Speed_1_Name",          "Qualification/Janitor_Mechanics_1_Name",      "Qualification/Janitor_Mechanics_2_Name",      "Qualification/Janitor_Mechanics_3_Name"        } },
+            { "Ghost Repair",       new List<string> { "Qualification/Janitor_GhostCapture_1_Name",   "Qualification/General_Speed_1_Name",          "Qualification/Janitor_Maintenance_1_Name",    "Qualification/Janitor_Maintenance_2_Name",    "Qualification/Janitor_Maintenance_3_Name"      } },
+            { "Mechanic",           new List<string> { "Qualification/General_Speed_1_Name",          "Qualification/Janitor_Mechanics_1_Name",      "Qualification/Janitor_Mechanics_2_Name",      "Qualification/Janitor_Mechanics_3_Name",      "Qualification/Janitor_Mechanics_4_Name"        } },
+            { "Repair",             new List<string> { "Qualification/General_Speed_1_Name",          "Qualification/Janitor_Maintenance_1_Name",    "Qualification/Janitor_Maintenance_2_Name",    "Qualification/Janitor_Maintenance_3_Name",    "Qualification/Janitor_Maintenance_4_Name"      } },
 
             // Terminator
             { "", new List<string> { } }
